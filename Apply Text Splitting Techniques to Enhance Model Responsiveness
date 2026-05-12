@@ -1,0 +1,156 @@
+%%capture
+!pip install "langchain==0.2.7"
+!pip install "langchain-core==0.2.20"
+!pip install "langchain-text-splitters==0.2.2"
+!pip install "lxml==5.2.2"
+!wget "https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/YRYau14UJyh0DdiLDdzFcA/companypolicies.txt"
+# This is a long document you can split up.
+with open("companypolicies.txt") as f:
+    companypolicies = f.read()
+print(companypolicies)
+from langchain_core.documents import Document
+Document(page_content="""Python is an interpreted high-level general-purpose programming language. 
+                        Python's design philosophy emphasizes code readability with its notable use of significant indentation.""",
+         metadata={
+             'my_document_id' : 234234,
+             'my_document_source' : "About Python",
+             'my_document_create_time' : 1680013019
+         })
+from langchain.text_splitter import CharacterTextSplitter
+
+text_splitter = CharacterTextSplitter(
+    separator="",
+    chunk_size=200,
+    chunk_overlap=20,
+    length_function=len,
+)
+texts = text_splitter.split_text(companypolicies)
+texts
+len(texts)
+texts = text_splitter.create_documents([companypolicies], metadatas=[{"document":"Company Policies"}])  # pass the metadata as well
+texts[0]
+#Recursively Split by Character
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=100,
+    chunk_overlap=20,
+    length_function=len,
+)
+texts = text_splitter.create_documents([companypolicies])
+texts
+len(texts)
+#Split Code
+from langchain.text_splitter import Language, RecursiveCharacterTextSplitter
+[e.value for e in Language]
+RecursiveCharacterTextSplitter.get_separators_for_language(Language.PYTHON)
+#Python
+PYTHON_CODE = """
+    def hello_world():
+        print("Hello, World!")
+    
+    # Call the function
+    hello_world()
+"""
+python_splitter = RecursiveCharacterTextSplitter.from_language(
+    language=Language.PYTHON, chunk_size=50, chunk_overlap=0
+)
+python_docs = python_splitter.create_documents([PYTHON_CODE])
+python_docs
+#Javascript
+RecursiveCharacterTextSplitter.get_separators_for_language(Language.JS)
+JS_CODE = """
+    function helloWorld() {
+      console.log("Hello, World!");
+    }
+    
+    // Call the function
+    helloWorld();
+"""
+
+js_splitter = RecursiveCharacterTextSplitter.from_language(
+    language=Language.JS, chunk_size=60, chunk_overlap=0
+)
+js_docs = js_splitter.create_documents([JS_CODE])
+js_docs
+#Markdown Header Text Splitter
+from langchain.text_splitter import MarkdownHeaderTextSplitter
+md = "# Foo\n\n## Bar\n\nHi this is Jim\n\nHi this is Joe\n\n### Boo \n\nHi this is Lance \n\n## Baz\n\nHi this is Molly"
+headers_to_split_on = [
+    ("#", "Header 1"),
+    ("##", "Header 2"),
+    ("###", "Header 3"),
+]
+markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
+md_header_splits = markdown_splitter.split_text(md)
+md_header_splits
+markdown_splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on, strip_headers=False)
+md_header_splits = markdown_splitter.split_text(md)
+md_header_splits
+#Split by HTML
+from langchain_text_splitters import HTMLHeaderTextSplitter
+html_string = """
+    <!DOCTYPE html>
+    <html>
+    <body>
+        <div>
+            <h1>Foo</h1>
+            <p>Some intro text about Foo.</p>
+            <div>
+                <h2>Bar main section</h2>
+                <p>Some intro text about Bar.</p>
+                <h3>Bar subsection 1</h3>
+                <p>Some text about the first subtopic of Bar.</p>
+                <h3>Bar subsection 2</h3>
+                <p>Some text about the second subtopic of Bar.</p>
+            </div>
+            <div>
+                <h2>Baz</h2>
+                <p>Some text about Baz</p>
+            </div>
+            <br>
+            <p>Some concluding text about Foo</p>
+        </div>
+    </body>
+    </html>
+"""
+headers_to_split_on = [
+    ("h1", "Header 1"),
+    ("h2", "Header 2"),
+    ("h3", "Header 3"),
+]
+html_splitter = HTMLHeaderTextSplitter(headers_to_split_on=headers_to_split_on)
+html_header_splits = html_splitter.split_text(html_string)
+html_header_splits
+from langchain_text_splitters import HTMLSectionSplitter
+
+html_string = """
+    <!DOCTYPE html>
+    <html>
+    <body>
+        <div>
+            <h1>Foo</h1>
+            <p>Some intro text about Foo.</p>
+            <div>
+                <h2>Bar main section</h2>
+                <p>Some intro text about Bar.</p>
+                <h3>Bar subsection 1</h3>
+                <p>Some text about the first subtopic of Bar.</p>
+                <h3>Bar subsection 2</h3>
+                <p>Some text about the second subtopic of Bar.</p>
+            </div>
+            <div>
+                <h2>Baz</h2>
+                <p>Some text about Baz</p>
+            </div>
+            <br>
+            <p>Some concluding text about Foo</p>
+        </div>
+    </body>
+    </html>
+"""
+
+headers_to_split_on = [("h1", "Header 1"), ("h2", "Header 2"), ("h3", "Header 3")]
+
+html_splitter = HTMLSectionSplitter(headers_to_split_on=headers_to_split_on)
+html_header_splits = html_splitter.split_text(html_string)
+html_header_splits
